@@ -8,7 +8,7 @@ int FP[] = {4, 1, 3, 5, 7, 2, 8, 6};
 
 int key[] = {0, 1, 0, 1, 0, 0, 0, 1, 0, 1};
 
-int plaintext[] = {1, 0, 1, 0, 1, 1, 0, 0};
+int plaintext[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // Expansion permutation table
 int EP[] = {4, 1, 2, 3, 2, 3, 4, 1};
@@ -24,8 +24,6 @@ int P8[] = {6, 3, 7, 4, 8, 5, 10, 9};
 
 int P10[] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
 
-int swap[] = {5, 6, 7, 8, 1, 2, 3, 4};
-
 void combine2BitArrays(int *array1, int *array2, int *result) {
     for (int i = 0; i < 2; i++) {
         result[i] = array1[i];
@@ -33,6 +31,21 @@ void combine2BitArrays(int *array1, int *array2, int *result) {
     }
 }
 
+void hexToBinary(char hex, int *binaryArray) {
+    int decimal;
+    sscanf(&hex, "%x", &decimal);
+    for (int i = 3; i >= 0; i--) {
+        binaryArray[i] = decimal % 2;
+        decimal /= 2;
+    }
+}
+
+void binaryToHex(int *binaryArray, char *hexValue) {
+    sprintf(hexValue, "%02X", (binaryArray[0] << 7) | (binaryArray[1] << 6) |
+                             (binaryArray[2] << 5) | (binaryArray[3] << 4) |
+                             (binaryArray[4] << 3) | (binaryArray[5] << 2) |
+                             (binaryArray[6] << 1) | binaryArray[7]);
+}
 
 void finalPermutation(int *plaintext) {
     int output[8];
@@ -162,27 +175,6 @@ void swapSides(int *array, int size) {
     }
 }
 
-void printArray(int *arr, int size) {
-    for (int i = 0; i < size; i++) {
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-}
-
-void printBinaryAsHex(int *binaryArray, int size) {
-    char hexChars[] = "0123456789ABCDEF";
-    char hexValue = 0;
-
-    // Convert each nibble to hexadecimal
-    for (int i = 0; i < size; i += 4) {
-        for (int j = 0; j < 4; j++) {
-            hexValue |= binaryArray[i + j] << (3 - j);
-        }
-        printf("%c", hexChars[hexValue]);
-        hexValue = 0;
-    }
-}
-
 void copyArray(int *source, int *destination, int size) {
     for (int i = 0; i < size; i++) {
         destination[i] = source[i];
@@ -195,7 +187,7 @@ void subKey(int *key, int *keeper, int numBits){
     p8Permutation(key);
 }
 
-void Encrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
+void Encrypt(int *subKey1, int *subKey2){
     int output[10];
     int leftHalf[4];
     int rightHalf[4];
@@ -209,7 +201,24 @@ void Encrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
     int outputss[2];
     int leftHandCopy[4];
     int rightHandCopy[4];
+    FILE *file = fopen("plaintext.txt", "r");
 
+    if (file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char hexValue1, hexValue2;
+
+    if (fscanf(file, "%1c%1c", &hexValue1, &hexValue2) != 2) {
+        fclose(file);
+        return; // Couldn't read two hex values
+    }
+
+    hexToBinary(hexValue1, plaintext);
+    hexToBinary(hexValue2, plaintext + 4); // Offset the second set of bits
+
+    fclose(file);
 
     for (int i = 0; i < 10; i++) {
         output[i] = key[P10[i] - 1];
@@ -274,11 +283,23 @@ void Encrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
 
     finalPermutation(combinedArray);
 
-    printBinaryAsHex(combinedArray, 8);
-    copyArray(combinedArray, plaintext, 8);
+    FILE *filer = fopen("ciphertext.txt", "w");
+
+    if (filer == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char hexValue[3];
+
+    binaryToHex(combinedArray, hexValue);
+
+    fprintf(filer, "%s\n", hexValue);
+
+    fclose(filer);
 }
 
-void Decrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
+void Decrypt(int *subKey1, int *subKey2){
     int output[10];
     int leftHalf[4];
     int rightHalf[4];
@@ -292,6 +313,24 @@ void Decrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
     int outputss[2];
     int leftHandCopy[4];
     int rightHandCopy[4];
+    FILE *file = fopen("ciphertext.txt", "r");
+
+    if (file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char hexValue1, hexValue2;
+
+    if (fscanf(file, "%1c%1c", &hexValue1, &hexValue2) != 2) {
+        fclose(file);
+        return; // Couldn't read two hex values
+    }
+
+    hexToBinary(hexValue1, plaintext);
+    hexToBinary(hexValue2, plaintext + 4); // Offset the second set of bits
+
+    fclose(file);
 
 
     for (int i = 0; i < 10; i++) {
@@ -354,27 +393,26 @@ void Decrypt(int *plaintext, int *key, int *subKey1, int *subKey2){
 
     finalPermutation(combinedArray);
 
-    printBinaryAsHex(combinedArray, 8);
+    FILE *filer = fopen("plaintext.txt", "w");
+
+    if (filer == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char hexValue[3];
+
+    binaryToHex(combinedArray, hexValue);
+
+    fprintf(filer, "%s\n", hexValue);
+
+    fclose(filer);
 }
 
 int main(){
-    FILE *filePointer;
     int subkey1[8];
     int subkey2[8];
 
-    // // Open a file in binary mode for reading
-    // filePointer = fopen("plaintext.txt", "rb");
-
-    // if (filePointer == NULL) {
-    //     perror("Error opening file");
-    
-    //     return 1;
-    // }
-
-    // fclose(filePointer);
-
-    Encrypt(plaintext, key, subkey1, subkey2);
-    printf("\n");
-    Decrypt(plaintext, key, subkey1, subkey2);
-    printf("\n");
+    Encrypt(subkey1, subkey2);
+    Decrypt(subkey1, subkey2);
 }
