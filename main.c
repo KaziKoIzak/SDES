@@ -24,6 +24,20 @@ int P8[] = {6, 3, 7, 4, 8, 5, 10, 9};
 
 int P10[] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
 
+char binaryArrayToChar(int *binaryArray) {
+    char character = 0;
+    for (int i = 0; i < 8; i++) {
+        character |= binaryArray[i] << (7 - i);
+    }
+    return character;
+}
+
+void charToBinary(char c, int *binaryArray) {
+    for (int i = 7; i >= 0; i--) {
+        binaryArray[i] = (c >> (7 - i)) & 1;
+    }
+}
+
 void combine2BitArrays(int *array1, int *array2, int *result) {
     for (int i = 0; i < 2; i++) {
         result[i] = array1[i];
@@ -208,15 +222,14 @@ void Encrypt(int *subKey1, int *subKey2){
         return;
     }
 
-    char hexValue1, hexValue2;
+    char character;
 
-    if (fscanf(file, "%1c%1c", &hexValue1, &hexValue2) != 2) {
+    if (fscanf(file, "%c", &character) != 1) {
         fclose(file);
-        return; // Couldn't read two hex values
+        return; // Couldn't read a character
     }
 
-    hexToBinary(hexValue1, plaintext);
-    hexToBinary(hexValue2, plaintext + 4); // Offset the second set of bits
+    charToBinary(character, plaintext);
 
     fclose(file);
 
@@ -283,6 +296,8 @@ void Encrypt(int *subKey1, int *subKey2){
 
     finalPermutation(combinedArray);
 
+    char characters = binaryArrayToChar(combinedArray);
+
     FILE *filer = fopen("ciphertext.txt", "w");
 
     if (filer == NULL) {
@@ -290,11 +305,7 @@ void Encrypt(int *subKey1, int *subKey2){
         return;
     }
 
-    char hexValue[3];
-
-    binaryToHex(combinedArray, hexValue);
-
-    fprintf(filer, "%s\n", hexValue);
+    fprintf(filer, "%c", characters);
 
     fclose(filer);
 }
@@ -320,18 +331,16 @@ void Decrypt(int *subKey1, int *subKey2){
         return;
     }
 
-    char hexValue1, hexValue2;
+    char character;
 
-    if (fscanf(file, "%1c%1c", &hexValue1, &hexValue2) != 2) {
+    if (fscanf(file, "%c", &character) != 1) {
         fclose(file);
-        return; // Couldn't read two hex values
+        return; // Couldn't read a character
     }
 
-    hexToBinary(hexValue1, plaintext);
-    hexToBinary(hexValue2, plaintext + 4); // Offset the second set of bits
+    charToBinary(character, plaintext);
 
     fclose(file);
-
 
     for (int i = 0; i < 10; i++) {
         output[i] = key[P10[i] - 1];
@@ -393,6 +402,8 @@ void Decrypt(int *subKey1, int *subKey2){
 
     finalPermutation(combinedArray);
 
+    char characters = binaryArrayToChar(combinedArray);
+
     FILE *filer = fopen("plaintext.txt", "w");
 
     if (filer == NULL) {
@@ -400,11 +411,7 @@ void Decrypt(int *subKey1, int *subKey2){
         return;
     }
 
-    char hexValue[3];
-
-    binaryToHex(combinedArray, hexValue);
-
-    fprintf(filer, "%s\n", hexValue);
+    fprintf(filer, "%c", characters);
 
     fclose(filer);
 }
