@@ -377,32 +377,40 @@ int main(){
     int subkey1[8];
     int subkey2[8];
     char character;
-    FILE *file = fopen("plaintext.txt", "r");
 
+
+
+//encryption section
+
+    //open plaintext input file
+    FILE *file = fopen("plaintext.txt", "r");
     if (file == NULL) {
         perror("Error opening file");
         return 1;
     }
 
-    FILE *filer = fopen("ciphertext.txt", "w");
 
+    //open cyphertext output file
+    FILE *filer = fopen("ciphertext.txt", "w");
     if (filer == NULL) {
         perror("Error opening file");
         return 1;
     }
 
-    if (fscanf(file, "%c", &character) != 1) {
-        fclose(file);
-        return 1; // Couldn't read a character
-    }
 
-    character = Encrypt(character);
-
-    fprintf(filer, "%c", character);
+    //encrypt
+    do {
+        character = fgetc(file);
+        character = Encrypt(character);
+        fprintf(filer, "%c", character);
+    } while (!feof(file));
 
     fclose(file);
     fclose(filer);
 
+
+
+//decryption section
     file = fopen("ciphertext.txt", "r");
     filer = fopen("plaintext.txt", "w");
 
@@ -415,7 +423,7 @@ int main(){
         fclose(file);
         return 1; // Couldn't read a character
     }
-    
+
     character = Decrypt(character);
 
     fprintf(filer, "%c", character);
