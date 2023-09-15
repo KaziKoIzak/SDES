@@ -9,7 +9,10 @@ int FP[] = {4, 1, 3, 5, 7, 2, 8, 6};
 int key[] = {0, 1, 0, 1, 0, 0, 0, 1, 0, 1};
 
 int subKey1[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
 int subKey2[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+int keySaver[] = {0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 , 0};
 
 int plaintext[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -204,8 +207,7 @@ void subKey(int *key, int *keeper, int numBits){
     p8Permutation(key);
 }
 
-char Encrypt(char character){
-    int output[10];
+void Encrypt(){
     int leftHalf[4];
     int rightHalf[4];
     int result[8];
@@ -213,21 +215,10 @@ char Encrypt(char character){
     int group2[4];
     int results[4];
     int combinedArray[8];
-    int keySaver[10];
     int outputs[2]; // Array to store the result
     int outputss[2];
     int leftHandCopy[4];
     int rightHandCopy[4];
-
-    charToBinary(character, plaintext);
-
-    for (int i = 0; i < 10; i++) {
-        output[i] = key[P10[i] - 1];
-    }
-
-    for (int i = 0; i < 10; i++) {
-        key[i] = output[i];
-    }
 
     initialPermutation(plaintext);
 
@@ -235,13 +226,10 @@ char Encrypt(char character){
     {
         if(i == 0)
         {
-            subKey(key, keySaver, 1);
-            copyArray(key, subKey1, 8);
+            copyArray(subKey1, key, 8);
         }
         else{
-            subKey(keySaver, key, 2);
-            copyArray(keySaver, key, 8);
-            copyArray(key, subKey2, 8);
+            copyArray(subKey2, key, 8);
         }
 
         // Split the plaintext into two 4-bit halves
@@ -284,17 +272,11 @@ char Encrypt(char character){
 
     finalPermutation(combinedArray);
 
-    for (int i = 0; i < 8; i++) {
-        printf("%d ", combinedArray[i]);
-    }
-    printf("\n");
-
-    return character = binaryArrayToChar(combinedArray);
+    copyArray(combinedArray, plaintext, 8);
 }
 
 
-char Decrypt(char character){
-    int output[10];
+void Decrypt(){
     int leftHalf[4];
     int rightHalf[4];
     int result[8];
@@ -302,21 +284,10 @@ char Decrypt(char character){
     int group2[4];
     int results[4];
     int combinedArray[8];
-    int keySaver[10];
     int outputs[2]; // Array to store the result
     int outputss[2];
     int leftHandCopy[4];
     int rightHandCopy[4];
-
-    charToBinary(character, plaintext);
-
-    for (int i = 0; i < 10; i++) {
-        output[i] = key[P10[i] - 1];
-    }
-
-    for (int i = 0; i < 10; i++) {
-        key[i] = output[i];
-    }
 
     initialPermutation(plaintext);
 
@@ -370,66 +341,74 @@ char Decrypt(char character){
 
     finalPermutation(combinedArray);
 
-    return character = binaryArrayToChar(combinedArray);
+    copyArray(combinedArray, plaintext, 8);
 }
 
 int main(){
-    int subkey1[8];
-    int subkey2[8];
+    FILE *inputFile = fopen("plaintext.txt", "r");
+    FILE *outputFile = fopen("ciphertext.txt", "w");
     char character;
+    int output[10];
+    int count = 0;
+    int i = 0;
+
+    for (int i = 0; i < 10; i++) {
+        output[i] = key[P10[i] - 1];
+    }
+
+    for (int i = 0; i < 10; i++) {
+        key[i] = output[i];
+    }
+
+    subKey(key, keySaver, 1);
+    copyArray(key, subKey1, 8);
+
+    subKey(keySaver, key, 2);
+    copyArray(keySaver, key, 8);
+    copyArray(key, subKey2, 8);
 
 
-
-//encryption section
-
-    //open plaintext input file
-    FILE *file = fopen("plaintext.txt", "r");
-    if (file == NULL) {
-        perror("Error opening file");
+    if (inputFile == NULL || outputFile == NULL) {
+        perror("Error opening files");
         return 1;
     }
 
+    while ((character = fgetc(inputFile)) != EOF) {
+        charToBinary(character, plaintext);
 
-    //open cyphertext output file
-    FILE *filer = fopen("ciphertext.txt", "w");
-    if (filer == NULL) {
-        perror("Error opening file");
+        Encrypt();
+
+        character = binaryArrayToChar(plaintext);
+
+        fputc(character, outputFile);
+        count++;
+    }
+
+    fclose(inputFile);
+    fclose(outputFile);
+
+    inputFile = fopen("ciphertext.txt", "r");
+    outputFile = fopen("plaintext.txt", "w");
+
+    if (inputFile == NULL || outputFile == NULL) {
+        perror("Error opening files");
         return 1;
     }
 
+    while (i < count) {
+        character = fgetc(inputFile);
+        charToBinary(character, plaintext);
 
-    //encrypt
-    do {
-        character = fgetc(file);
-        character = Encrypt(character);
-        fprintf(filer, "%c", character);
-    } while (!feof(file));
+        Decrypt();
 
-    fclose(file);
-    fclose(filer);
+        character = binaryArrayToChar(plaintext);
 
-
-
-//decryption section
-    file = fopen("ciphertext.txt", "r");
-    filer = fopen("plaintext.txt", "w");
-
-        if (filer == NULL) {
-        perror("Error opening file");
-        return 1;
+        fputc(character, outputFile);
+        i++;
     }
 
-    if (fscanf(file, "%c", &character) != 1) {
-        fclose(file);
-        return 1; // Couldn't read a character
-    }
-
-    character = Decrypt(character);
-
-    fprintf(filer, "%c", character);
-
-    fclose(file);
-    fclose(filer);
+    fclose(inputFile);
+    fclose(outputFile);
 
     return 0;
 }
