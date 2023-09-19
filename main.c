@@ -344,7 +344,7 @@ void Decrypt(){
     copyArray(combinedArray, plaintext, 8);
 }
 
-int main(){
+void CSDES(){
     FILE *inputFile = fopen("plaintext.txt", "r");
     FILE *outputFile = fopen("ciphertext.txt", "w");
     char character;
@@ -370,7 +370,7 @@ int main(){
 
     if (inputFile == NULL || outputFile == NULL) {
         perror("Error opening files");
-        return 1;
+        return;
     }
 
     while ((character = fgetc(inputFile)) != EOF) {
@@ -392,7 +392,7 @@ int main(){
 
     if (inputFile == NULL || outputFile == NULL) {
         perror("Error opening files");
-        return 1;
+        return;
     }
 
     while (i < count) {
@@ -409,6 +409,12 @@ int main(){
 
     fclose(inputFile);
     fclose(outputFile);
+
+    return;
+}
+
+int main(){
+    CSDES();
 
     return 0;
 }
