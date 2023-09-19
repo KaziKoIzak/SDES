@@ -16,6 +16,8 @@ int keySaver[] = {0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 , 0};
 
 int plaintext[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+int ciphertext[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
 // Expansion permutation table
 int EP[] = {4, 1, 2, 3, 2, 3, 4, 1};
 
@@ -272,7 +274,7 @@ void Encrypt(){
 
     finalPermutation(combinedArray);
 
-    copyArray(combinedArray, plaintext, 8);
+    copyArray(combinedArray, ciphertext, 8);
 }
 
 
@@ -289,7 +291,7 @@ void Decrypt(){
     int leftHandCopy[4];
     int rightHandCopy[4];
 
-    initialPermutation(plaintext);
+    initialPermutation(ciphertext);
 
     for(int i = 0; i < 2; i++)
     {
@@ -303,8 +305,8 @@ void Decrypt(){
 
         // Split the plaintext into two 4-bit halves
         for (int i = 0; i < 4; i++) {
-            leftHalf[i] = plaintext[i];
-            rightHalf[i] = plaintext[i + 4];
+            leftHalf[i] = ciphertext[i];
+            rightHalf[i] = ciphertext[i + 4];
         }
 
         copyArray(leftHalf, leftHandCopy, 4);
@@ -335,7 +337,7 @@ void Decrypt(){
         if(i == 0)
         {
             swapSides(combinedArray, 8);
-            copyArray(combinedArray, plaintext, 8);
+            copyArray(combinedArray, ciphertext, 8);
         }
     }
 
@@ -378,7 +380,7 @@ void CSDES(){
 
         Encrypt();
 
-        character = binaryArrayToChar(plaintext);
+        character = binaryArrayToChar(ciphertext);
 
         fputc(character, outputFile);
         count++;
@@ -397,7 +399,7 @@ void CSDES(){
 
     while (i < count) {
         character = fgetc(inputFile);
-        charToBinary(character, plaintext);
+        charToBinary(character, ciphertext);
 
         Decrypt();
 
